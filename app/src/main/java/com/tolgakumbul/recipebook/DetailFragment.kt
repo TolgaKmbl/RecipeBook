@@ -103,7 +103,32 @@ class DetailFragment : Fragment() {
     }
 
     private fun saveRecipe(view: View) {
+        val recipeName = recipeName.text.toString()
+        val ingredients = ingredients.text.toString()
+        if(pickedBitmap != null){
+            val recipeImage = resizeBitmap(pickedBitmap!!, 300)
+        }
 
+    }
+
+    private fun resizeBitmap(selectedBitmap:Bitmap, maxSize:Int):Bitmap{
+        var width = selectedBitmap.width
+        var height = selectedBitmap.height
+
+        val bitmapScale : Double = width.toDouble() / height.toDouble()
+
+        if(bitmapScale > 1){
+            // horizontal bitmap
+            width = maxSize
+            val croppedHeight = width / bitmapScale
+            height = croppedHeight.toInt()
+        } else {
+            // vertical bitmap
+            height = maxSize
+            val croppedWidth = height * bitmapScale
+            width = croppedWidth.toInt()
+        }
+        return Bitmap.createScaledBitmap(selectedBitmap, width,height,true)
     }
 
 }
