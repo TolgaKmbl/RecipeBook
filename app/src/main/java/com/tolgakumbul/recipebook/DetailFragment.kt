@@ -2,6 +2,7 @@ package com.tolgakumbul.recipebook
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -15,12 +16,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.Navigation
 import kotlinx.android.synthetic.main.fragment_detail.*
+import java.io.ByteArrayOutputStream
 
 class DetailFragment : Fragment() {
 
     var pickedImage: Uri? = null;
-    var pickedBitmap : Bitmap? = null;
+    var pickedBitmap: Bitmap? = null;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,12 +89,14 @@ class DetailFragment : Fragment() {
             try {
                 context?.let {
                     if (pickedImage != null) {
-                        if(Build.VERSION.SDK_INT >= 28){
-                            val source = ImageDecoder.createSource(it.contentResolver, pickedImage!!)
+                        if (Build.VERSION.SDK_INT >= 28) {
+                            val source =
+                                ImageDecoder.createSource(it.contentResolver, pickedImage!!)
                             pickedBitmap = ImageDecoder.decodeBitmap(source)
                             addImageLogo.setImageBitmap(pickedBitmap)
                         } else {
-                            pickedBitmap = MediaStore.Images.Media.getBitmap(it.contentResolver, pickedImage)
+                            pickedBitmap =
+                                MediaStore.Images.Media.getBitmap(it.contentResolver, pickedImage)
                             addImageLogo.setImageBitmap(pickedBitmap)
                         }
                     }
@@ -105,19 +110,39 @@ class DetailFragment : Fragment() {
     private fun saveRecipe(view: View) {
         val recipeName = recipeName.text.toString()
         val ingredients = ingredients.text.toString()
-        if(pickedBitmap != null){
+        if (pickedBitmap != null) {
             val recipeImage = resizeBitmap(pickedBitmap!!, 300)
+            val outputStream = ByteArrayOutputStream()
+            recipeImage.compress(Bitmap.CompressFormat.PNG, 50, outputStream)
+            val byteArray = outputStream.toByteArray()
+
+            try {
+                context?.let {
+                    val database = it.openOrCreateDatabase("RecipeDB", Context.MODE_PRIVATE, null)
+                    database.execSQL("CREATE TABLE IF NOT EXISTS recipes(id INTEGER PRIMARY KEY, name VARCHAR, ingredients VARCHAR, pic BLOB)")
+                    val sqlString = "INSERT INTO recipes (name, ingredients, pic) VALUES (?,?,?)"
+                    val statement = database.compileStatement(sqlString)
+                    statement.bindString(1, recipeName)
+                    statement.bindString(2, ingredients)
+                    statement.bindBlob(3, byteArray)
+                    statement.execute()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            val action = DetailFragmentDirections.actionDetailFragmentToListFragment()
+            Navigation.findNavController(view).navigate(action)
         }
 
     }
 
-    private fun resizeBitmap(selectedBitmap:Bitmap, maxSize:Int):Bitmap{
+    private fun resizeBitmap(selectedBitmap: Bitmap, maxSize: Int): Bitmap {
         var width = selectedBitmap.width
         var height = selectedBitmap.height
 
-        val bitmapScale : Double = width.toDouble() / height.toDouble()
+        val bitmapScale: Double = width.toDouble() / height.toDouble()
 
-        if(bitmapScale > 1){
+        if (bitmapScale > 1) {
             // horizontal bitmap
             width = maxSize
             val croppedHeight = width / bitmapScale
@@ -128,7 +153,7 @@ class DetailFragment : Fragment() {
             val croppedWidth = height * bitmapScale
             width = croppedWidth.toInt()
         }
-        return Bitmap.createScaledBitmap(selectedBitmap, width,height,true)
+        return Bitmap.createScaledBitmap(selectedBitmap, width, height, true)
     }
 
 }
