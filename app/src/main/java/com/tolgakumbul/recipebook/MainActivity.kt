@@ -1,9 +1,9 @@
 package com.tolgakumbul.recipebook
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.Navigation
 
 class MainActivity : AppCompatActivity() {
@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == R.id.addRecipeItem){
-            val action = ListFragmentDirections.actionListFragmentToDetailFragment()
+            val action = ListFragmentDirections.actionListFragmentToDetailFragment("fromMenu")
             Navigation.findNavController(this,R.id.fragmentContainerView).navigate(action)
         }
         return super.onOptionsItemSelected(item)

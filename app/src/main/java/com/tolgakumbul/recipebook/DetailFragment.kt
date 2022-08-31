@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -43,6 +44,40 @@ class DetailFragment : Fragment() {
         }
         saveRecipeButton.setOnClickListener {
             saveRecipe(it)
+        }
+        arguments?.let {
+            if ("fromList".equals(DetailFragmentArgs.fromBundle(it).fromInfo)) {
+                saveRecipeButton.visibility = View.INVISIBLE
+                val recipeId = DetailFragmentArgs.fromBundle(it).idInfo
+                try {
+                    context?.let {
+                        val database =
+                            it.openOrCreateDatabase("RecipeDB", Context.MODE_PRIVATE, null)
+                        val cursor = database.rawQuery(
+                            "SELECT * FROM recipes WHERE id = ?",
+                            arrayOf(recipeId.toString())
+                        )
+                        val recipeNameIndex = cursor.getColumnIndex("name")
+                        val recipeIngredientsIndex = cursor.getColumnIndex("ingredients")
+                        val recipePicIndex = cursor.getColumnIndex("pic")
+                        while (cursor.moveToNext()) {
+                            recipeName.setText(cursor.getString(recipeNameIndex))
+                            ingredients.setText(cursor.getString(recipeIngredientsIndex))
+                            val byteArray = cursor.getBlob(recipePicIndex)
+                            addImageLogo.setImageBitmap(
+                                BitmapFactory.decodeByteArray(
+                                    byteArray,
+                                    0,
+                                    byteArray.size
+                                )
+                            )
+                        }
+                        cursor.close()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 

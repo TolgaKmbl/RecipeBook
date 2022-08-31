@@ -7,12 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
+import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_list.*
 
 class ListFragment : Fragment() {
 
     var recipeNameList = ArrayList<String>()
     var recipeIdList = ArrayList<Int>()
+    private lateinit var listAdapter: ListRecyclerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,8 +29,13 @@ class ListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        listAdapter = ListRecyclerAdapter(recipeNameList, recipeIdList)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.adapter = listAdapter
+
         addRecipeButton.setOnClickListener {
-            val action = ListFragmentDirections.actionListFragmentToDetailFragment()
+            val action = ListFragmentDirections.actionListFragmentToDetailFragment("fromMenu")
             Navigation.findNavController(it).navigate(action)
         }
         sqlDataFetch()
@@ -48,6 +55,7 @@ class ListFragment : Fragment() {
                     recipeNameList.add(cursor.getString(recipeNameIndex))
                     recipeIdList.add(cursor.getInt(idIndex))
                 }
+                listAdapter.notifyDataSetChanged()
                 cursor.close()
             }
         } catch (e: Exception) {
